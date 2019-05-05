@@ -1,0 +1,70 @@
+---
+title: "Bayes' Rule"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(SDSdata)
+library(mosaic)
+library(mosaicModel)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+The previous tutorial introduced the computations involved in stratification. For a categorical response variable, one calculates the  proportion of cases with each level of the response variable, broken down by any explanatory variables. For instance, in the Titanic passenger data, we can calculate the proportion of survivors stratified by sex:
+
+```{r survivor-sex, exercise = TRUE, exercise.cap="Stratifying survival by sex"}
+df_stats(survived ~ sex, data = Titanic_passengers, props)
+```
+
+So, 73% of females survived compared to 19% of males.
+
+Using exactly the same technique, we can reverse the roles of the two variables  to calculate the proportion of females stratified by  survival.
+
+```{r sex-survivor, exercise = TRUE, exercise.cap="Stratifying survival by sex"}
+df_stats(sex ~ survived, data = Titanic_passengers, props)       
+```
+
+Of the people who survived, 68%  were  women. Of the people who died, 16% were women.
+
+So from the Titanic passenger data,  we can calculate either  p(survived | sex) or p(sex | survived). Those two numbers are not  equal. And  why should they be? They describe different groups: females in the first  and survivors in the second.
+
+It  would, of course, be crazy to use the statistics on survival  on the Titanic as an estimate of survival on  any other ship or in any other circumstance. The  statistics are relevant only  to the  Titanic.
+
+But in  other circumstances, we might like to apply the patterns seen in  data to some new situation. An example given in the book relates to  estimating the  different  probabilities of getting lung cancer  for smokers  and for non-smokers. The data on which the example is based are available in the `Schrek_1950` data frame. (Robert Schrek was the lead author in the 1950 publication about the data in the journal *Cancer Research*.)
+
+For simplicity, we'll consider men aged 40-49, the group considered in the book. Here are the rates of smoking, stratified by the site of the cancer.
+
+```{r schrek-1,  exercise=TRUE}
+Our_group <- Schrek_1950 %>% filter(age == 40, site %in% c("lung", "other"))
+Smoker_by_site  <- df_stats(smoker ~ site, data = Our_group, props, n = length)
+```
+
+The  smoking rate for "other" cancer sites can reasonably be assumed to be more-or-less representative of the smoking rate among the population  without cancer. (Of course, this assumption  might be challenged.)
+
+Almost exactly the same calculation can be  done to  look  at the probability of lung cancer among smokers and non-smokers.
+
+```{r schrek-2,  exercise=TRUE}
+Our_group <- Schrek_1950 %>% filter(age == 40, site %in% c("lung", "other"))
+Site_by_smoker <- df_stats(site ~ smoker, data = Our_group, props, n  = length)
+```
+
+The lung  cancer rate for smokers in the data, 21%, is certainly not representative of other smokers. Remember, all  the people in the study had cancer of some sort.
+
+```{r lda_schrek, exercise=TRUE}
+Our_group <- Schrek_1950 %>% filter(age == 40, site %in% c("lung", "other"))
+classifier1 <- MASS::lda(site ~ smoker, data = Our_group)
+classifier2 <- MASS::lda(site ~ smoker, data = Our_group, 
+                         prior = c(15/100000, 99985/100000))
+mod_eval(classifier1)
+mod_eval(classifier2)
+```
+
+In building the classifier, we can use the summary in `Smoker_by_site`, but adjust it  so that it represents the lung cancer rate observed  in the  population  to  whom we want to apply the classifier.
+
+MULTIPLY n by 1000, then calculate the number of  smokers and non-smokers, then cut them up differently.

@@ -1,0 +1,131 @@
+---
+title: "Functions and arguments"
+subtitle: "Stats for Data Science"
+author: "Daniel Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Introduction
+
+The previous tutorial focussed on two basic objects in the R language: numbers and quoted character strings. You also learned how to assign a name to an object so that you can easily use the object's value in a new computation.
+
+In this tutorial, we'll introduce *functions*, which are the means by which you "use an object" in a computation. The key common  nouns of this tutorial are:
+
+* function
+* argument
+* function application 
+* value (or "return value")
+
+
+## Functions and arguments
+
+Almost everything you will do in R involves *function*s. Functions constitute the *verbs* of the R language; they *do* something. Each function takes R objects as input and transforms those inputs into an output.  
+
+Functions are very much like a manufacturing machine, such as the paper-clip making machine in the video below.
+
+![](https://www.youtube.com/watch?v=OsDdmDFDYHA)
+
+Watch the video for a bit, and don't worry if you can't understand the German narration. 
+
+You'll see three barrels on the left. These contain the inputs to the machine: colored wire. The machine itself is the box on the right. There's an on/off switch in the little box on the far right. And there are other components that set the shape of the paper clip being produced. (You can see these in the slow-motion segment at time 2:15 in the video.)
+
+
+You have already encountered the names of some functions, for instance, `sqrt`, `paste`, `nchar`, `grepl`. Let's look closely at how to turn them on. 
+
+The paper-clip machine takes its inputs from the barrels on the left. To use a function, you need to create a kind of barrel as well. You do this by adding a pair of parentheses *after* the name of the function, for instance:
+
+`sqrt()`
+
+You put the input in the barrel and the output is generated automatically, like this:
+
+```{r sqrt-example, exercise = TRUE, exercise.cap = "Handing an argument to a function"}
+sqrt(4)
+```
+
+The `[1]` isn't part of the output. It's just the packaging that R places around the output to display it on the screen.
+
+## Inputs / Arguments
+
+An input to a function is called an *argument*. The word "input" would serve just as well, but if you use "argument" you will be reminded that you are talking about a function. And it's sometimes said that a function "*takes*" arguments.
+
+The process of using a function on an input in order to produce an output is so important in computer languages that there are a lot of words for it: 
+
+- "Evaluate" a function 
+- "Invoke" a function
+- "Apply" a function
+- "Call" a function
+- "Run" a function
+
+All of these phrases refer to the same thing, which in R shows up as something like `sqrt(4)`, where `4` is the argument being *passed* to the `sqrt` function.
+
+Some functions take more than one input. When this is the case, you put all the inputs in the same barrel, separating them by commas. For example, `seq(2, 5)` involves two arguments. The `seq` function uses these inputs to produce an output.
+
+```{r seq1, exercise=TRUE, exercise.eval = TRUE, exercise.cap="Evaluating functions on their arguments"}
+seq(2, 5)
+```
+
+
+As you'll see, "getting R to do something" is matter of two things:
+
+1. Finding the right function for the job.
+2. Constructing the arguments on which the function will be applied.
+
+Over the following chapters, you will encounter functions to do many things, e.g. construct a graphic from data, build a model of data, summarize data and models, etc. To help you see when we are talking about a function, we'll write the names of functions with parentheses, for instance: `sqrt()`. Strictly speaking, the name is just `sqrt`, but by writing it `sqrt()` you are reminded that the R object referred to by that name is a function.
+
+Use the exercise block above to help you answer these questions:
+
+```{r function-questions, echo = FALSE}
+quiz(caption = "Questions about functions",
+     question("What happens when you invoke the `sqrt()` function without putting any argument in the parentheses?",
+              answer("R will use zero as the argument, and produce zero (that is, $\\sqrt{0}$) as the output."),
+              answer("R pops up a dialog box where you can enter the argument you want.",
+                     message="No. Arguments should always be in the parentheses."),
+              answer("R generates an error pointing out that `sqrt()` requires 1 argument.",
+                     correct = TRUE)
+     ),
+     question("When there is more than one argument, does the order they are placed in the parentheses mean anything? Try `seq(2, 5)` versus `seq(5, 2)`",
+              answer("Order matters", correct = TRUE),
+              answer("The output is the same regardless of the order of the arguments",
+                     message = "The outputs are not the same. One is ascending and the other is descending.")
+      ),
+     question("Which of these sentences uses function words in a sensible way?",
+              answer("Arguments are applied to a function to produce an input.",
+                     message="Sorry, but a function is applied to arguments, not the other way round."),
+              answer("The parentheses after the function name cause the function to be applied to its arguments.",
+                     correct = TRUE)
+              ),
+              answer("A function is an object.", correct = "Right! Strings and numbers are also objects.")
+     
+)
+```
+
+## What R does and what you do
+
+You and R have distinct roles in performing a computation. 
+
+Your job is to write *expressions*. Some examples:
+
+- `3 + 2`
+- `"Wednesday"`
+- `sqrt(4) + 7`
+
+When you press ![](images/Run-code.png) in the tutorial, the expressions you have written get sent to R. For each expression,
+
+- R checks the expression to see if it's grammatical. 
+- If the grammar test is passed, R *evaluates* the expression. This is just to say that R carries out the computation you specified when you wrote the expression.
+    - If the grammar test is failed, R produces an error message. Sometimes these have valuable clues about what's wrong, so make sure to read error messages.
+
+Some expressions are grammatical but make no sense or are ambiguous. An example of an ambiguous sentence in English is the start of Groucho Marx's famous joke: "One morning I shot an elephant in my pajamas?" The punchline highlights the ambiguity: "How he got in my pajamas, I'll never know."
+
+When a grammatical expression doesn't make sense, R will produce an error message. Or sometimes R doesn't have what it needs to carry out the computation.  That results in an error message, too.
+
+Error messages are the way R communicates to you that an expression you wrote isn't right in some way. It might be more polite if such communications started with "My bad!" rather than with the critical sounding "Error." You'll be more effective if you treat such errors as "helpful hints" to help you fix whatever is wrong in your expression.
+
+

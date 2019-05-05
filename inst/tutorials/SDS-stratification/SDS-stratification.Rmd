@@ -1,0 +1,181 @@
+---
+title: "Stratification"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(SDSdata)
+library(mosaic)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+The previous tutorial introduced you to the calculations involved in making a properly formatted prediction. For categorical response variables, the format gives a probability over each possible level of the variable. For quantitative response variables a common format is a 95% prediction interval.
+
+That previous tutorial made such predictions without any inputs. The R formulas involved in the prediction calculations and graphics looked like `age ~ 1`, with  the `1` on the right-hand side of the formula meaning "all the same" or "with no inputs." Such no-inut predictions are unusual. The more common situation is that you have some explanatory variables that are inputs for the prediction and you want to generate a prediction *given* values for the inputs. This is called *stratification*.
+
+The software commands for stratification involve modifying the right-hand side of the model formula to include the covariates. For instance, instead of `age  ~ 1`, stratifying on `class` would be written `age ~ class`.  
+
+## What kind of response variable?
+
+Although predictions of a categorical response variable differ from those of a quantitative response variable, the underlying R command is almost identical. Let's contrast the command for a categorical response such as `class` to the command for a quantitative response variable such as `age`. We'll use the Titanic data, as we did in the previous tutorial.
+
+* Categorical response variable: 
+    `df_stats(class ~ 1, data = Titanic_passengers, props)`
+* Quantitative response variable: 
+    `df_stats(age ~ 1, data = Titanic_passengers, coverage())`
+
+## Categorical response variable
+
+The exercise block that follows shows a no-input prediction of the class -- First, Second, Steerage  -- in which a randomly selected passenger was travelling. You can see from the output that about half of the passengers were steerage.
+
+```{r by_sex, exercise = TRUE, exercise.cap = "Predicting class", exercise.eval = TRUE, warning  = FALSE}
+Pred1 <- df_stats(class ~ survived + sex, data = Titanic_passengers, props)
+Pred1
+```
+
+Modify the command to stratify the prediction by the `sex` of the traveller. You can do this simply just by replacing the `1` in the formula  with `sex`. The result will have  one row for females and one row for  males. If you  are  making  a prediction for  a female, use the proportions in that row. Similarly, for  a male, use the proportions for the male row.
+
+You can stratify on a different explanatory variable in the same way. Try this with the `survived` variable,  which will stratify on whether or  not the passenger survived the sinking. Similarly, you can stratify on both the variables `sex`  and `survived` by using  the formula `class  ~ sex + survived`.
+
+To  answer the following questions, you will first  have to select the appropriate stratifying variable (or variables) and, second, to read off the proportion from the row corresponding to the person for whom the prediction is to be made.
+
+```{r by_sex_exer, echo  = FALSE}
+Q1 <- question("How likely is a randomly selected female passenger to be  travelling first class?",
+               answer("25%"),
+               answer("31%", correct = TRUE),
+               answer("38%"),
+               answer("40%"), 
+               answer("64%")
+               )
+Q2 <- question("How likely is a randomly selected survivor to have been  travelling first class?",
+               answer("25%"),
+               answer("31%"),
+               answer("38%"),
+               answer("40%", correct = TRUE), 
+               answer("64%")
+               )
+Q3  <- question("How  likely is a randomly selected male survivor to have been travelling first class?",
+               answer("25%"),
+               answer("31%"),
+               answer("38%",  correct = TRUE),
+               answer("40%"), 
+               answer("64%")
+                )
+quiz(caption  = "Predicting class", Q1, Q2, Q3)
+```
+
+### Graphing predictions
+
+Sometimes it's appropriate  to  present a prediction in graphical form. The key to doing this is  to place all the prediction probabilities in one column of the data frame produced by `df_stats()`. This can be accomplished with the `format = "long"` optional argument.
+
+To see what `format = "long"` does, compare the two  outputs from the  exercise  block below.
+
+```{r format-long, exercise = TRUE, exercise.cap = "Wide vs long?"}
+df_stats(class ~ sex, data = Titanic_passengers, props, format  = "wide")
+df_stats(class ~ sex, data = Titanic_passengers, props, format  = "long")
+```
+
+```{r format-long-question, echo = FALSE}
+question("If you don't specify the `format`, the default will be used.  What is the default format?",
+         answer("`\"wide\"`", correct = TRUE),
+         answer("`\"long\"`"),
+         answer("An error  message is produced.")
+         )
+```
+
+Once  you have  the  predictions in a "long" format, constructing a graph is straightforward, as in the next exercise block.
+
+```{r pred-graph1,  exercise = TRUE, exercise.cap="Graphing a prediction"}
+Preds <- df_stats(class ~ sex, data = Titanic_passengers, props, format = "long")
+gf_errorbar(value + value ~ sex, color = ~ stat, data = Preds) %>%
+  gf_lims(y = c(0,1))
+```
+
+
+For predictions in a probability format, some people like to  show the probabilities as areas. Doing this involves using a new glyph: a colored bar, with `gf_col()`. 
+
+```{r pred-graph2,  exercise = TRUE, exercise.cap="Graphing a prediction"}
+Preds <- df_stats(class ~ sex, data = Titanic_passengers, props, format = "long")
+gf_col(value ~ sex, fill = ~ stat, data = Preds, position = "stack",
+       alpha = 0.75) %>%
+  gf_lims(y = c(0,1))
+```
+
+When graphed as bars, the  probability assigned to each level of the response variable  is proportional to the *length* of the bar rather than the position of the bar. Another commonly used option is to set `position = "dodge"`. 
+
+## Quantitative response variable
+
+Predictions for quantitative response  variables are made in much the same way as for categorical response variables. The difference will be the use of `coverage()` instead of `props()` when calculating the prediction.
+
+```{r predquant1, exercise = TRUE, exercise.cap="Predicting a numerical outcome"}
+Preds <- df_stats(age ~ sex + class, data = Titanic_passengers, coverage())
+Preds
+```
+
+Graphics are most easily made when the "wide" format is used in `df_stats()`, which sets up  the output of the prediction calculation in a way very  suitable for plotting the prediction intervals.
+
+```{r predquant2, exercise = TRUE, exercise.cap="Graphing a numerical prediction", exercise.run = TRUE}
+Preds <- df_stats(age ~ sex + class, data = Titanic_passengers, coverage())
+gf_errorbar(lower + upper ~ sex | class, data = Preds, position = "dodge")
+```
+
+In the example above, the prediction has been stratified on both `sex` and `class`. That's why the formula for `df_stats()` is `age ~ sex + class`. In forming the graphic, the errorbar glyph is used  and the left side of the formula  is `lower  + upper`. 
+
+The right side of the graphing formula involves both `sex` and `class`.  But we can use only one explanatory variable for the horizontal axis. The other explanatory variable should enter into the graph either as color  or facets (or both). The right side of the formula is `sex  | class`, which is a directive to use `sex` for the horizontal axis and `class` for  faceting. You might equally well choose `class | sex`.
+
+```{r  predquant2-exer,  echo = FALSE}
+Q1 <- question("How many facets will be produced by the graphing formula `lower + upper ~ class | sex",
+               answer("Only 1 since `sex` will  be used for color."),
+               answer("2", correct = TRUE),
+               answer("3", message = "No, there are only two levels of sex in the data."))
+Q2 <- question("If  you wanted to use color to represent `class`, what graphing formula would be appropriate?", 
+               answer("`lower + upper ~ class`"),
+               answer("`lower  + upper ~ sex`", correct = TRUE),
+               answer("`lower + upper ~ sex + class`"))
+Q3 <- question("To  use color for `class`,  you will need to include an additional argument for `gf_errorbar()`. Which one?",
+               answer("`color = class`"),
+               answer("`color = \"class\"`"),
+               answer("`color = ~ class`"))
+quiz(caption="Mapping class to graphing color", Q1, Q2, Q3)
+```
+
+
+## Handling quantitative *explanatory*  variables.
+
+The previous examples have all used *categorical* explanatory variables. What about when an explanatory variable is quantitative?
+
+Perhaps the best answer is to direct you to later chapters  that use  *functions* to represent the relationship between a response variable and a  quantitative explanatory variable.
+
+But, for the sake of illustration, let's use the quantitative variable `age` as the explanatory variable in  a predictive model of `class`.
+
+```{r badquant, exercise = TRUE}
+Preds <- df_stats(class ~ age,  data = Titanic_passengers, props, 
+                  format  = "long")
+gf_col(value ~ age, fill = ~ stat, data = Preds)
+```
+
+The result  is a mess! Why?  Because each individual value of `age` is being used as its  own  stratum. For instance, there is one stratum for age 62 and one for age 63. 
+
+It's usually better to create a categorical equivalent to the numerical explanatory variable, so that you can control  how many levels there are and how they are spaced. 
+
+```{r badquant2, exercise = TRUE, exercise.cap="Binning a quantitative variable"}
+Titanic_passengers <- 
+  Titanic_passengers %>% 
+  mutate(age_group  = ntiles(age, 15))
+Preds  <- df_stats(class ~  age_group,  data = Titanic_passengers, props, 
+                   format = "long")
+gf_col(value ~ age_group, fill = ~ stat, data = Preds)
+```
+
+In  the example, we have used `ntiles(age, 5)` to divide the `age`  variable up into five discrete groups. Here are some other options:
+
+* `ntiles(age,  6, format = "interval" )`
+* `cut(age, breaks = c(0,5,10,15,20,30,40,50,60,80))`
+
+It's up to you to decide how many groups or where to place the breaks between groups.

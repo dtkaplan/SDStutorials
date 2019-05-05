@@ -1,0 +1,34 @@
+---
+title: "Starting out with R"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Starting out
+
+The *R Basics* tutorials provided with *Stats for Data Science* aim to get you started with R commands and then guide you, chapter by chapter, through the specific commands and techniques appropriate to each chapter.
+
+The interactive boxes in this document are called *exercise blocks*. Each one is a fully functional R session using standard software that you can  use equally well in R documents, the  R command console, or any other implementation of R. Here's a simple  example of an  exercise block:
+
+```{r simple-add, exercise=TRUE}
+3 + 2
+```
+
+Press the ![](images/Run_code.png) button to have R run the code in the  block and produce the result. Of course, you can edit the code in the block before you run it. Editing the code  to get the results that you want is a lot of you'll be  doing  as you follow  these tutorials. If you're not happy with the results you got from  your code, edit the block some more and run  it again. Keep on going until you get what you're looking for.
+
+- [This document](https://dtkaplan.shinyapps.io/R_basics_starting_out/)
+- Preliminary [R Basics tutorial on R grammar](https://dtkaplan.shinyapps.io/R_basics_language_intro/)
+- Preliminary [R Basics tutorial on functions](https://dtkaplan.shinyapps.io/R_basics_data_graphics_intro/)
+- SDS Chapter 2 [R Basics tutoral on accessing data](https://dtkaplan.shinyapps.io/R_basics_data_intro/)
+- SDS Chapter 3 [R Basics tutorial on data graphics](https://dtkaplan.shinyapps.io/R_basics_data_graphics_intro/)
+- SDS Chapter 4 [R Basics tutorial on  prediction formats](https://dtkaplan.shinyapps.io/R_basics_prediction/)
+- SDS Chapter 5 [R Basics tutorial on stratification](https://dtkaplan.shinyapps.io/R_basics_stratification/)
+
+

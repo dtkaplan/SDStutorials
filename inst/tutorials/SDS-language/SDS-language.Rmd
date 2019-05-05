@@ -1,0 +1,194 @@
+---
+title: "Basics of the R Language"
+subtitle: "Stats for Data Science"
+author: "Daniel Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Common nouns in R
+
+R is a computer language. Using R requires learning a little of the language in order that you can read and write computer commands to do your work. In this chapter, you'll learn to identify several  components of the  language, in the same way you learned to identify verbs, nouns, pronouns, and so on when studying a natural language like English.
+
+In English, a noun is a word used to identify people, animals, objects, etc. Familiar examples  are "city", "cat", "building", "car", "book", "mountain". Actually, each of those examples is a *common noun*. The word "common" signifies that the noun identifies a *class* of objects.
+
+The R language also has common nouns. The ones we  will encounter in this tutorial are:
+
+* name 
+* expression 
+* string
+* number
+* object
+* assignment
+
+## Proper nouns and names
+
+In the grammar of natural languages,  such as English, there is another kind of noun called a *proper noun*. A proper noun refers  to a particular instance of some corresponding common noun, for instance: "San Diego" ([a city](https://en.wikipedia.org/wiki/San_Diego)), "Felix" ([a cat](https://en.wikipedia.org/wiki/Felix_the_Cat)), the "UN Headquarters" ([a building](https://en.wikipedia.org/wiki/Headquarters_of_the_United_Nations)), "Chitty Chitty Bang Bang" ([a  car](https://en.wikipedia.org/wiki/Chitty_Chitty_Bang_Bang)), "A Tale of Two Cities" ([a book](https://en.wikipedia.org/wiki/A_Tale_of_Two_Cities)), "Denali" ([a mountain](https://en.wikipedia.org/wiki/Denali)). 
+
+The R equivalent of a proper noun is called (just like English) a `name`. Every name refers to a specific instance of some common noun.
+
+Just as English has rules stating what is a legitimate proper noun, such as capitalization, R has rules on the form of names.
+
+* an R name starts with a letter. For instance,`friday` or `Galton`. 
+* capitalization is taken seriously. For instance, `friday` is an utterly different name than  `Friday`, and both  of them are different from  `FriDay`.
+* an R name can include digits, so long as they aren't the first character in the name. For instance,  `Friday13th`.
+* the *only* punctuation symbols that can appear in a name are period  and underscore, that is, `.` and `_`. 
+* Spaces cannot appear in  a name, so `Friday the 13th` is not a valid R name.
+* Names do *not* appear in quotation marks. So `"Friday"` is not an R name. 
+
+## Names as expressions
+
+The word *expression* is used to describe a valid statement in R. We say "Run an expression" to mean getting R to perform the operation described by the expression. For the moment, we'll work with the simplest form of expressions. One such expression consists entirely of a name. 
+
+We haven't yet learned to create anything in R, so all we can do  with names right now is enter a name as an expression and see what R does with it. When you do this, something will happen, but exactly what that is depends on the name:
+
+a. If the name has been assigned to an object created in R, that object itself (but not the name) will be displayed below the exercise block.
+b. If the name has not been assigned to a object, R will tell you so. This happens a lot when using R, since it's so easy to mis-spell a name. The way R tells you that there is no object under the name you give is through an *error message*. To see what this looks like, press ![](images/Run_code.png) in the exercise block that follows this paragraph.
+
+```{r names1, exercise=TRUE, exercise.cap = "Names as commands"}
+Friday
+```
+
+Work through each of the following examples of R `names` to see which have already been assigned to an object and which have not. Remember that the exercise block is intended for you to try things out, so you can replace `Friday` with whatever name you want to check out.
+
+```{r name1q1}
+quiz(caption = "Using names",
+     question("Has `Friday` already been assigned to an object?",
+              answer("Yes"),
+              answer("No", correct=TRUE)
+     ),
+     question("Has `pi` already been assigned to an object?",
+              answer("Yes", correct=TRUE),
+              answer("No")
+     ),
+     question("Has `mtcars` already been assigned to an object?",
+              answer("Yes", correct=TRUE),
+              answer("No")
+     )
+)
+```
+
+## Error messages
+
+Sometimes you will make a mistake and write an invalid name. If R were a person, and polite, it would say, "Sorry, but you seem to have used something as a name that isn't in a valid form." Computers don't follow such human etiquette. Instead, they refer to such situations as *errors* and give you notice of them with an *error message*. Some of the error messages you might see for an ill-formed name look like this:
+
+```{r names2a, error = TRUE, echo = TRUE}
+Friday the 13th
+```
+
+```{r names2b, error = TRUE, echo = TRUE}
+13Friday
+```
+
+```{r names2c, error = TRUE, echo = TRUE}
+_Friday
+```
+
+```{r names2d, error = TRUE, echo = TRUE}
+Fri+day
+```
+
+Effective users of computer languages have learned not to be offended by error messages. Instead, such users read the message carefully and try to relate the message to the expression that caused them so that they can fix the expression. Don't react emotionally to error messages. They are not criticisms. And always assume that what's behind the error message is a mistake (sometimes very slight) that *you* have made. That will put you in a better position  to fix the problem.
+
+## Numbers and arithmetic {#numbers}
+
+Another simple form of expression creates a number. Such expressions look exactly the way we write decimal numbers in everyday life, including decimal points but not including the commas used (in English) to separate out the millions from the thousands andthe thousands from  the hundreds. So `45682.2` is a valid expression but `45,682.2` is not.
+
+Numbers are used, for example, in arithmetic. Arithmetic expressions will be our first example of *compound expressions*, that is, expressions that are made from other expressions. For instance:
+
+```{r number-expression-a, exercise=TRUE, exercise.eval=TRUE}
+3 + 5
+```
+
+Try out each of these expressions in the above code block to get a little practice with arithmetic in R:
+
+* `3 - 5`
+* `7 * 6`
+* `42 / 21`
+* `10 ^ 3`
+* `sqrt(16)`
+
+```{r numbersq1}
+quiz(caption = "Questions about numbers",
+     question("What is the decimal value of $\\sqrt{79}$?",
+              answer("about 18.32"),
+              answer("about 8.888", correct = TRUE)
+     ),
+     question("What happens if you include commas in a numeral, as in  an expression like `5,232`.",
+              answer("R figures out what you meant."),
+              answer("R asks you what you meant."),
+              answer("R politely tells you that commas aren't  allowed."),
+              answer("R generates an error message saying that the `','`  is \"unexpected\".",  correct = TRUE)
+     )
+)
+```
+
+
+## Strings {#strings}
+
+Another kind of simple expression is called a *character string*, sometimes known as a *quoted string* or simply a *string*. You create a string by putting characters in between quotation marks, such as `"Hello, world"` or `"http://google.com"`.  The purpose of the quotation marks is to indicate to R that the expression is not an R *name*. 
+
+
+```{r stringsa, exercise=TRUE, exercise.eval = TRUE}
+"Hello, world"
+```
+
+The thing you create when you run a simple expression in the form of a string is ... the string itself. Later, we'll use  strings for genuine purposes, such as referring to data files on the internet.
+
+```{r stringsq1}
+quiz(caption = "Questions about strings",
+     question("What happens when you leave the quotation marks off of a string, for instance with the expression `Hello, world`?",
+              answer("R figures out what you really meant to do."),
+              answer("R treats the whole thing as a name"),
+              answer("R looks at the first \"word\" in the string and tries to treat it as a name or number", correct = TRUE)),
+     question("How do the expressions `\"sqrt(4)\"` and `sqrt(4)` differ?",
+              answer("The first one generates an error."),
+              answer("They don't differ. They produce the same thing."),
+              answer("The first expression creates a string, the second carries out the numerical operation square-root of 4.", correct = TRUE)
+     )
+)
+```
+
+## Objects
+
+Just as "string" is a common noun referring to a *class* of objects, and "number" is a common noun referring to another *class* of objects, the word "object" is used in R as a common noun to describe anything created in the R language. You can think of *object* as meaning "anything, but without being specific about the class that thing belongs to."
+
+## Assignment 
+
+Now that we know how to create numbers and strings in R, we can give names to those things that we create. Giving a name to an R object is called "assignment." an assignment expression  consists of three parts: a name, the symbol  `<-`,  and something we have created.  
+
+```{r assignment1, exercise = TRUE}
+lucky_number <- 14
+month <- "February"
+```
+
+
+
+When you press ![](images/Run_code.png), you may think at first that nothing happened. But that's not true.  R has  stored the number 14 under the name `lucky_number` and  the string "February" under the name `month`. It's only when you use the names in an expression and run it that you'll see the results of the assignment.  For example, add
+each of the following expressions in the exercise block *after* the two assignment expressions:
+
+- `lucky_number + 2`
+- `paste(month, lucky_number)`
+- `nchar(month)`
+- `grepl("r", month)`
+
+```{r assignmentq1,}
+quiz(caption="Assigning names to R objects",
+     question("Will  the  expression  `14 <- lucky_number`  work?",
+              answer("Yes!",  message = "Sorry, but the name must *always*  be to  the left  of the `<-`."),
+              answer("No, but `fourteen <- lucky_number` does.", correct = TRUE)),
+              
+     question("What happens if you put the expression `lucky_number + 2` on the very first line of the exercise block?",
+              answer("R looks at the later expressions to find what's stored under `lucky_number`.", 
+                     message ="Sorry, but R evaluates each line in turn, not knowing what lies ahead."),
+              answer("R gives a \"object 'lucky_number' not found\" error message", 
+                     correct = TRUE)
+     )
+  )
+```
+

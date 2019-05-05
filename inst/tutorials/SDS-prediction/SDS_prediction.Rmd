@@ -1,0 +1,186 @@
+---
+title: "Prediction and Central Tendency"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(SDSdata)
+library(mosaic)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+This tutorial will focus on the *formats* for  presenting a prediction.  
+
+* For a categorical variable, the  prediction takes  the  form  of  a probability assigned  to each possible  level  of  the  variable.
+* For a quantitative variable, the  prediction takes  the  form  of an interval.
+
+In this tutorial, you'll see:
+
+1.  How to use `df_stats()`  to  compute probabilities and prediction intervals.
+2.  How to use  a new kind of glyph,  the  "error bar",  to plot prediction intervals. 
+
+## The "no-input" model
+
+In previous tutorials we've used formulas such as `age ~ sex`, which means "break up age by sex"  or "account for `age` using the sex variable", or "plot `age` versus `sex`". In the "Prediction and Central  Tendency" chapter of *Stats for Data Science*, we have temporarily taken a step backwards,  suspending for the moment the use of an explanatory variable such as `sex`. The formula for such as no-input  model  is
+
+    age ~ 1
+    
+The  `1` in the formula is a stand-in.  Rather than a genuine explanatory variable,  `1` stands for "there's  just one group."
+
+Let's experiment a bit with such no-input formulas.
+
+```{r intercept-explain, exercise = TRUE,  exercise.cap = "No-input formulas"}
+df_stats(sex ~ 1, data = Titanic_passengers, table)
+df_stats(sex ~ class,  data = Titanic_passengers, table)
+gf_jitter(sex ~ 1, data  = Titanic_passengers, width = 0.2,  alpha = 0.5) %>%
+  gf_lims(x = c(0, 2))
+```
+
+```{r intercept-exercise, echo  = FALSE}
+Q1  <- question("How many columns are there in the `sex ~ 1` tabulation?",
+                answer("1"),
+                answer("2", correct  = TRUE),
+                answer("3")
+)
+Q2 <- question("What happens if you delete  the `gf_lims()` line in the  plot (and also delete the  pipe)?",
+               answer("An  error message."),
+               answer("The points are lined up very tightly."),
+               answer("The points are scattered horizontally all over the  plot.",
+                      correct = TRUE))
+Q3 <- question("What  column  is in  the `sex ~ class` tabulation  that isn't in  the `sex ~ 1` tabulation?",
+               answer("class", correct = TRUE),
+               answer("sex"),
+               answer("male"))
+quiz(caption="No-input formulas", Q1, Q2, Q3)
+```
+
+##  Predicting categorical variables
+
+A good form for prediction  of a categorical variable assigns a  probability to  each  possible value  of the  variable.  You can  do this with `df_stats()`, using  the `probs` statistic instead of  `table`. Run  the following  exercise block using  `probs`. 
+
+```{r predict-cat,  exercise = TRUE, exercise.cap="Prediction  for a  categorical variable"}
+df_stats(sex ~ 1,  data = Titanic_passengers, table)
+```
+
+```{r predict-cat-exercise, echo = FALSE}
+Q1 <- question("What's the probability that  a randomly  selected passenger  from the Titanic will be female?",
+         answer("About 36%", correct = TRUE),
+         answer("About 50%"),
+         answer("About 64%"))
+Q2 <-  question("Use  the exercise block to  make a prediction of whether a randomly selected  passenger survived.  What should  the formula  be?",
+                answer("`sex ~ survived`"),
+                answer("`survived ~ sex`"),
+                answer("`survived ~  1`", correct = TRUE)
+                )
+Q3 <- question("What is the  probability that a  randomly  selected  passenger  survived?  (Hint: you may have  to look at the meta-data to interpret the levels. `?Titanic_passengers`)",
+               answer("About 38%", correct = TRUE),
+               answer("About 50%"),
+               answer("About 62%")
+               )
+quiz(caption = "Categorical predictions",  Q1, Q2, Q3)
+```
+
+## Predicting quantitative variables
+
+A standard format for a prediction of a quantitative variable, such as `age`, is a 95% prediction interval. You can  use `df_stats()` to calculate these by using `coverage()`  instead  of `table` or `props`.
+
+```{r quant-predict, exercise=TRUE, exercise.cap = "Prediction  intervals"}
+df_stats(age  ~ 1, data = Titanic_passengers,  coverage(level = 0.95))
+```
+
+You may wonder  why `coverage()` is used with parentheses but `table` and  `props` are not. This is because the coverage  calculation involves specifying  a "level", which has been set to 95% (that is, 0.95) in the initial example. 
+
+```{r quant-predict-quiz, echo = FALSE}
+Q1 <- question("What is the 95% prediction  interval for a randomly  selected  passenger's fare?",
+               answer("about 11 to 32 dollars US."),
+               answer("about 11 to 32 pounds GB."),
+               answer("about 7 to 211 dollars US"),
+               answer("about 7 to 211  pounds GB"))
+Q2 <- question("How  are you to know whether the  units of the prediction interval on `fare` are in US dollars or Great Britain pounds?",
+               answer("You have to  guess."),
+               answer("It's written  to the far left  of the  interval output."),
+               answer("You can read the metadata.", correct  = TRUE))
+quiz(caption="Quantitative predictions", Q1, Q2)
+```
+
+## Graphing intervals
+
+The following exercise block will generate a two-layer  graphic: a jitter plot of the passengers' ages  together with a 95% prediction interval for the fare paid by a randomly  selected passenger.
+
+```{r  interval-graph, exercise = TRUE,  exercise.cap = "Interval layers"}
+Stats  <- df_stats(fare ~ 1, data = Titanic_passengers, coverage(level=0.95))
+gf_jitter(fare ~ 1, data  = Titanic_passengers, width = 0.2,  alpha = 0.25) %>%
+  gf_lims(x = c(0, 2)) %>%
+  gf_errorbar(lower  +  upper ~ 1, data  = Stats, size = 2, color = "blue") 
+```
+  
+This is a somewhat  complicated command, but you can  understand it if you take it apart.
+
+- Line  1: Uses `df_stats()` to calculate a 95% prediction interval in exactly the  same way we've done  previously. What's different here is only that a name, `Stats`, has  been assigned to the value produced by `df_stats()`.
+- Lines 2 and 3:  Exactly the same as we used previously to make a jitter  plot. But a pipe (the symbol `%>%`) has been  added to the end  of line  3 in preparation for the next  layer in the  plot.
+- Line 4: Here you see some new things:
+     - a new kind  of  glyph called an "error bar." (That name is  unfortunate insofar  as it suggests that a mistake has been made. Better to  call it an "interval bar" or an "uncertainty bar.") 
+     - a formula with a new structure: `lower + upper ~ 1`. The `~ 1` part of  the  formula is the  same as it's  been  throughout this tutorial.  But the left  side of the  formula, `lower + upper`, has  two  names.  This  is needed because there isn't just  a single y-position for the  error bar, there are two  positions: the top  and the  bottom. The names "upper"  and "lower"  are  used  because  the   output of `df_stats()` is  constructed this way.
+     - `size = 2,  color = "blue"`. This makes the error  bar thick  enough that  you can readily see it.
+     - `data = Stats`. In the prediction  interval  layer,  the `Titanic_passengers` data is  only indirectly used. What's used  directly is the output  of `df_stats()`, to which we  assigned the  name `Stats`. 
+     
+When you're drawing prediction  intervals  you will generally use a  function  like `df_stats()`  to  calculate the  top  and bottom of  the  interval. Be sure to look at  the output  from `df_stats()` so  that  you'll use the right  names in the graphics formula.
+
+```{r interval-graph-quiz, echo = FALSE}
+Q1 <- question("What fraction of the dot's are **outside** the vertical  range of  the 95% prediction interval shown? (Hint: You don't  need to count.)",
+         answer("2.5%"),
+         answer("5%",  correct = TRUE),
+         answer("10%"))
+Q2 <- question("What fraction of the dot's are **below** the bottom of  the 95% prediction interval shown? (Hint: Again, you don't  need to count.)",
+         answer("2.5%", correct = TRUE),
+         answer("5%"),
+         answer("10%"))
+Q3 <- question("And what fraction of the dot's are **above** the top of  the 95% prediction interval shown? (Hint: Just think about it.)",
+         answer("2.5%", correct = TRUE),
+         answer("5%"),
+         answer("10%"))
+quiz(caption = "Prediction  intervals", Q1,  Q2, Q3)
+```
+
+## Measures of central tendency
+
+You can use  `df_stats()` to calculate statistics  other than prediction intervals. For instance, there  are statistics `mean` and `median`.  
+
+```{r mean-median, exercise=TRUE}
+df_stats(fare ~ 1, data = Titanic_passengers,  mean, median)
+```
+
+```{r  mean-median-quiz, echo = FALSE}
+Q1 <- question("Which is larger, the mean or the median fare?",
+               answer("The mean", correct = TRUE),
+               answer("The  median"),
+               answer("They are about the same."))
+Q2 <- question("What names has `df_stats()` assigned to the mean and median",
+                answer("`mean` and `median` (Duh!)"),
+                answer("`mean_fare` and `median_fare`", correct = TRUE),
+                answer("`fare_mean` and `fare_median`"))
+quiz(caption =  "Means and medians",  Q1,  Q2)
+```
+
+There are several ways to plot measures of central  tendency. For instance, you can draw a large dot as in the following:
+
+```{r central-dot, exercise = TRUE}
+Stats  <- df_stats(fare ~ 1, data = Titanic_passengers, mean, median)
+gf_jitter(fare ~ 1, data  = Titanic_passengers, width = 0.2,  alpha = 0.25) %>%
+  gf_lims(x = c(0, 2)) %>%
+  gf_point(mean_fare ~ 1, data  = Stats, size = 2, color = "white") %>%
+  gf_point(median_fare ~ 1, data = Stats, size = 2,  color = "green")
+```
+
+The dots are a little  hard to see. You  can draw a horizontal line instead of a dot by using a little trick:
+
+1.  Instead  of  `gf_point()`,  use  `gf_errorbar()`.
+2.  Arrange the formula so  that the top and bottom are at the same value, for instance, `mean_fare + mean_fare  ~ 1`.
+
+

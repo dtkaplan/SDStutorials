@@ -1,0 +1,94 @@
+---
+title: "Combining data frames"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(SDSdata)
+library(mosaic)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+
+Up until now, the emphasis has been on techniques for working with and extracting information from  a *single* data frame.  But this is not the whole story. Data scientists very often need to construct a data frame from multiple sources. For instance, you might be examining the possible factors behind the success or failure of primary school education with data on the individual pupils in a state. But you will also use supporting data on schools, on teachers, and on the socio-economic conditions of the areas pupils come from. Each of the supporting data frames will have its own *unit of observation* -- a school, a teacher, a neighborhood -- and consequently will be in its own data frame. 
+
+Another common situation concerns combining existing knowledge with new data. For instance, in Pakistan in the 1980s there was concern about the incidence of tetanus (a serious bacterial illness) in newborns. There were several theories having to do with the manner in which the newborn's umbilical cord was cut. <https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(89)91378-0/fulltext> Medical records were scarce and incomplete, so it was not practical to look at a representative cohort of births, say all the births in one year. Instead, the researchers collected two small samples: 1) all the newborns tetanus brought the clinic, and 2) other newborns brought to the clinic without tetanus. (@traverso-1989) There's valuable information to be had by comparing these two groups even though they are not representative of all births. To generalize their findings to the entire population of newborns, the researchers combined their data with information about birthing practices from other sources.
+
+This chapter introduces ways of combining data from multiple sources and ways of combining existing information with that extracted from the data at hand.
+
+## Multiple sources
+
+
+
+The `Devoted_runners` data frame (in the `SDSdata`  package) gives a personal history running times of women in the Cherry Blossom ten-mile road race who participated in the race for 19 or more years from 1995 to 2018. The data are shown in Table \@ref(tab:devoted-0) and graphed in  Figure \@ref(fig:devoted1) shows the runners' histories. These data come from the Cherry Blossom race's web site,  naturally enough. 
+
+```{r devoted-0, echo = FALSE}
+Devoted_runners %>% unique() %>%
+  select(year, name, seconds) %>%
+  arrange(desc(seconds), desc(year)) %>%
+  sds_table(caption  = "(ref:devoted-0-cap)", in_margin = TRUE)
+```
+
+(ref:devoted-0-cap) Individual times (in seconds) to run an  annual ten mile road race.  
+
+
+```{r devoted1, echo = FALSE, fig.cap  = "(ref:devoted-1-cap)"}
+Devoted_runners %>%
+  unique() %>%
+  group_by(name) %>%
+  filter(min(year) > 1994, n() > 19) %>%
+gf_line(seconds ~  year, data = ., color = ~ name)
+```
+
+(ref:devoted1) The running time data from Table \@ref(tab:devoted-0) plotted against year for each of the runners who participated 19 or more  times from  1995 to 2018. 
+
+Careful examination  of the running records reveals some patterns. First, the racers tend to slow down as they age and remain in roughly the same order over the years. Second, for most runners, there is a dip in 2015 and perhaps another in 2000. Why were the racers particularly fast in these years?
+
+Suppose you want  to investigate if the  weather on race day has an impact. Perhaps race day in 2015 had particularly nice weather for running. Unfortunately, the Cherry Blossom records don't include the weather. But the US National Oceanic and Atmospheric Administration (NOAA) does keep such records going back  decades  on an hourly basis. Table \@ref(tab:race-weather) shows the NOAA records at the 8am start time of the race.
+
+```{r  race-weather, echo = FALSE}
+Race_weather %>%
+  select(year, month, day, temp,  humidity, wind_speed) %>%
+  sds_table()
+```
+
+
+HOW TO BRING THESE TOGETHER
+
+Weather records missing for the race date in 2002.
+
+REMEMBER, the 2015 race was short: 9.39 miles versus 10 miles ordinarily
+
+
+```{r devoted-joined, echo = FALSE}
+Devoted_runners %>% unique() %>%
+  select(year, name, seconds) %>%
+  arrange(desc(seconds), desc(year)) %>%
+  left_join(Race_weather %>% select(year, month, day, temp, humidity, wind_speed)) %>%
+  sds_table(caption  = "(ref:devoted-0-cap)", in_margin = TRUE)
+
+```
+
+
+
+
+
+
+
+
+## Joining data frames
+
+## For an exercise
+
+classifiers  are not always the result of data tabulation. Sometimes classifiers are rules or flow-charts based on experience. An example of a classifier that takes your symptoms as input and produces as output the probability of your having the flu is shown in Figure \@ref(fig:self-assessment).
+
+```{r self-assessment, echo = FALSE,  fig.cap = "(ref:self-assessment-flu-cap)"}
+knitr::include_graphics("images/flu_selfassess_flowchart.png")
+```
+
+(ref:self-assessment-flu-cap) A self-assessment classifier for flu [published by the US Veterans Health Administration](https://www.publichealth.va.gov/docs/flu_selfassess_flowchart.pdf). The classifier function takes the form of a decision tree with inputs like "feeling sweaty" or "having chills". The output of the function is a probability, even though it's presented in everyday English ("may have", "probably do not have") rather than a number between zero and one.^[Strictly speaking, the output of the flow-chart in Figure \@ref(fig:self-assessment) is not a number between 0 and 1. But if the chart had been drawn someone differently, say substituting "Probability of flu: 40%" for "You may have the flu," and substituting "Probability of flu: 10%" for "You probably do not have the flu," the  chart would be exactly in the right form for a classifier.]

@@ -1,0 +1,208 @@
+---
+title: "Accessing Data"
+subtitle: "Stats for Data Science"
+author: "Daniel Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(mosaic)
+library(mosaicData)
+library(dplyr)
+library(SDSdata)
+library(googlesheets)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Data frames
+
+You've seen a few classes of R objects: strings, numbers, functions. Time to meet the class that plays the star role in statistics and data science: the *data frame*.
+
+A data frame stores and organizes *tidy data*. As described in Chapter 2 of *Stats for Data Science*, tidy data consists of rows and columns. Each column is a variable. Each row is an instance of the unit of observation.
+
+We'll talk about where data frames are stored in a moment, but for now we'll use one of the many data frames available through R, the `Titanic_passengers` data frame in the `SDSdata` package.
+
+```{r Titanic_passengers, exercise = TRUE, exercise.cap="Refer to data frames by name."}
+Titanic_passengers
+```
+
+The display looks very much like a spreadsheet, but you cannot edit it. There are variables such as `survived`, `sex`, and `fare`. There is one row for each of 1309 passengers on the Titanic. 
+
+Note that in the display, there is a small tag under the variable name such as `<chr>` or `<dbl>`. The `<chr>` tag stands for "character string." It's telling you that every entry for that variable is a character string, which is a common way to store categorical variables. The `<dbl>` tag is more obscure. It's telling you that the variable is quantitative. 
+
+The meta-data for `Titanic_passengers` is available through the R help system. To see help on an R data frame or function, use the `?` notation in R along with the name of the object. 
+
+```{r meta-data, exercise = TRUE, exercise.cap="Getting the documention with ?"}
+?Titanic_passengers
+```
+
+```{r data-quiz1, echo = FALSE}
+quiz(caption = "Basic data actions",
+     question("In the display of the `Titanic_passengers` data set, categorical and quantitative variables are aligned differently under the variable name. How?",
+              answer("Categorical variables are centered, while numbers are aligned to the left."),
+              answer("Categorical variables are aligned to the left, while numbers are aligned right.",
+                     correct = TRUE),
+              answer("Categorical variables are quoted, like this: `\"Southhampton\"`", message = "No. The *contents* of the character string are displayed, but there are no quotes.")
+              ),
+     question("Another data set available is `Titanic_crew`. Use the exercise block to view the `Titanic_crew` data. How many rows are there?",
+              answer("761"),
+              answer("895", correct = TRUE),
+              answer("1012")
+              ),
+     question("Access the meta-data for `Titanic_crew`. What is the meaning of the `crew` variable?",
+              answer("Simply tells if the person was a member of the crew."),
+              answer("Tells which division the crew-member worked in.", correct = TRUE),
+              answer("There is no `crew` variable.")
+              ),
+     question("Access the `Galton` data frame and its documentation. What is the meaning of the `mother` variable?",
+              answer("Whether the person had a mother."),
+              answer("Whether the person was a mother."),
+              answer("The person's mother's height, in cm."),
+              answer("The person's mother's height, in inches.")
+     )
+)
+```
+
+## Accessing data frames
+
+To work with data, you need to have access to it. Often, you'll be starting with one or more computer files containing the data, but data are also often accessed through a *database* system or even streamed via the internet. To keep things simple, we'll focus on data stored in computer files.
+
+Even simpler, most of the computer data files that we'll be using in these tutorials are stored in *R packages*, meaning that they can be accessed with a simple R object name. Whenever such data is used, you'll be given that name; you don't need to figure it out yourself. You saw examples in the previous section with the names `Titanic_passengers` and `Galton`. The people who curate such data often do a good job of providing metadata explaining what the variables mean, the origin of the data, and so on.
+
+Of course, you are not limited to using the data stored in R packages. You can read data from files stored on the internet, from database systems, and so on. When we need to do this, you'll be shown how. But as an illustration, let's read from a Google Sheet connected with a form for entering data.
+
+- Go to [this form](https://docs.google.com/forms/d/e/1FAIpQLSd8zrRERJ3wA4jCR9nHREXZvtRaC225DZstYSo3c_8VluHqqQ/viewform?usp=sf_link) and answer the three questions. the questions aren't personal. The data is collected only so that you can see how your own response gets added to those collected previously. 
+
+- The exercise block below reads the data from Google and stores it under the R name `Short_survey`. As it happens, Google identifies each file by assigning a unique "key." Such keys may look like a series of random letters and numbers, but they identify where on the cloud servers to look for the file containing the speadsheet. 
+
+The expression `tail(Short_survey)` instructs R to display the last few lines of the data frame which likely will have the answers you submitted to the form.
+
+```{r read_survey, exercise=TRUE, exercise.cap="Read the survey data.", message = FALSE}
+file_key <- gs_key("1Tsz6K4v7krAdvI5uPEv9DaiVeWqj8GHxBSyg5pXHieU")
+Short_survey <- gs_read(file_key)
+tail(Short_survey)
+```
+
+The purpose of this example is *not* to  teach you how to use Google Sheets. Instead, the point is to show you a real command so that you can see how to take it apart into idenfiable components. At this stage you should be able to recognize the following:'
+
+1. The gibberish is contained in an R quoted character string.
+2. That string is being passed as the argument to the function `gs_key()`.
+3. Whatever calculation is being  done by `gs_key()`, the output value is being assigned a name, `file_key`.
+4. `gs_read()` is a function that takes one argument. The value with the name `file_key` is being passed as the argument  to `gs_read()`, which produces another value, being stored under the name `Short_survey`.
+
+What kind of object is held under the name `Short_survey`? You can't figure this out without knowing what computation `gs_read()` performs. As you gain experience, you'll become familiar with a few dozen functions and what they do. `gs_read()` is probably not one you will use often. Its purpose is to read a Google Sheet and to create a data frame from the contents of that sheet. To quote from the documentation for `gs_read()` (which you can see by giving the command `?gs_read` in the exercise block):
+
+> This function reads data from a worksheet and returns a data frame. 
+
+The word "return" may seem out of place initially, but think about invoking a function as if you were sent someone off to perform a specified task, say shopping for eggs, and this person *returns* with the eggs. 
+
+## Examining variables and their names
+
+You've already seen how to access data stored in the R packages used in this book: you just need to have the name of the data frame, for instance, `Titanic_passengers`. In this book, we'll generally follow a convention that names assigned to data frames start with a capital letter. 
+
+Every data frame consists of one or more variables. Each of the variables has a name of its own. Our convention for variable names has them consisting of lower-case letters.  For instance, `Titanic_passengers` has a variable named `age` and another named `boat`.
+
+When working with a data frame, it is helpful to be able to see the list of variables and a description of typical values. The simplest way to do this is to give the name of the data frame as a commmand. In these tutorial documents, such a command will result in a paged table of the entire data frame.
+
+An easy way to see the names of the variables contained in a data frame is to apply the function `names()`. This will return a set of character strings containing the variable names as quoted strings. `names()` doesn't tell you anything but the names, but often you will want a glimpse of what is the content of each variable. The `glimpse()` function provides this. Of course, both `names()` and `glimpse()` take a data frame as an argument. For a more complete summary of  the variables, use `summary()`. If you are working directly in RStudio (that is, *not* in tutorial documents) `View()` will produce a scrollable display of the entire  data frame.
+
+```{r name-glimpse, exercise=TRUE, exercise.cap="A quick glimpse of a data frame."}
+names(Titanic_passengers)
+glimpse(Titanic_passengers)
+summary(Titanic_passengers)
+```
+
+The advantage of `glimpse()` is that the output is very compact. The disadvantage is that only the first few values of each variable are shown. In contrast, `summary()` tells  you about all the values in each variable, but it's description only has detail for numerical variables.
+
+```{r glimpse-exercise, echo = FALSE}
+Q1 <- question("What are the possible  values  of the `survived` variable in `Titanic_passengers`?",
+               answer("Yes and no."),
+               answer("1 and 0.", correct = TRUE),
+               answer("\"survived\" and \"died\"")               
+               )
+Q2 <- question("Which `Titanic_passengers` variables are quantitative?",
+               answer("sex, age, and boat"),
+               answer("age, parch, sibsp, body, and fare", correct = TRUE),
+               answer("boat, age, survived, and fare"))
+
+quiz(caption = "A quick look at data", Q1, Q2)
+```
+
+## Computing on data frames
+
+The functions `summary()`, `glimpse()`, and `View()` are mainly intended to produce viewable output to help the user "see" the data. Much work in data science concerns "wrangling" data frames, that is, transforming variables, taking subsets of rows or variables, summarizing variables, etc. The wrangling functions `filter()`, `select()`, `arrange()`, `summarise()`, `group_by()`, and `mutate()` are part  of one popular system, `dplyr`, for wrangling data. 
+
+Data wrangling is a rich topic, but one that's behind the scenes in this book. A comprehensive introduction is available in the book [*R for Data Science*](https://r4ds.had.co.nz/). Another helpful resource is [*Data Computing*](https://www.dropbox.com/s/65wsg9ohwnffgmd/Data-Computing-Review-Copy.pdf?dl=0).
+
+## Counting and proportions
+
+Counting rows is a simple but important task in data science. There are many R functions available for this, but here we will focus on a general purpose function for computing statistics on variables: `df_stats()`. 
+
+The `df_stats()` function is one of many that share a basic notation. The notation two features of the R language that we'll introduce here: 
+
+1. R modeling formulas that involve variable names and the *tilde* character: `~`
+2. Named arguments
+
+It suffices here to show some examples. We'll use `df_stats()` to count the number of passengers who survived, broken down by sex.
+
+```{r survive_count, exercise = TRUE, exercise.cap = "Counting and proportions"}
+df_stats(survived ~ sex, data = Titanic_passengers, table)
+```
+
+The first argument to `df_stats()` is a *formula*. The formula `survived ~ sex` tells `df_stats()` to look at the `survived` variable, but to 
+break it down by `sex`.
+
+
+The second argument to `df_stats()` is `data = Titanic_passengers`. This is an instance of a *named argument*: the argument's name is `data`, the value for that argument is the data frame `Titanic_passengers`. 
+
+The third argument to `df_stats()` specifies the statistical summary to be calculated. `table` means to count the rows. Similarly, `props` counts the rows but converts them to a proportion of the total.
+
+```{r dfstats_quiz, echo = FALSE}
+Q1 <- question("What proportion of male passengers survived?",
+               answer("9 percent"), 
+               answer("19  percent", correct=TRUE),
+               answer("29 percent"))
+Q2 <- question("Some people who got into lifeboats nonetheless died. Which lifeboat had the smallest fraction of survivors?",
+               answer("A", correct = TRUE),
+               answer("B"),
+               answer("C"),
+               answer("D"))
+
+quiz(caption = "Using `df_stats()`", Q1, Q2 )
+```
+
+## Combining data frames
+
+Data scientists often need to combine data from different sources. Computationally, this means combining two or more data frames. To illustrate, let's consider two different ways of combining the data in these three data frames: `Titanic_passengers`,  `Titanic_crew`, `Titanic_boats`.
+
+Suppose we want a comprehensive list of all the people on the Titanic, be they passengers or crew. This is a matter of row-wise combining `Titanic_passengers` and `Titanic_crew`. The function `bind_rows()` will accomplish this, so long as the corresponding variables in the two data frames have the same names.
+
+```{r combining-data, exercise  = TRUE, exercise.cap = "Combining data"}
+All_people <- bind_rows(Titanic_passengers, Titanic_crew)
+All_people
+```
+
+Another important data-wrangling operation is called "joining" two data frames. Joins are used when the two data frames have different units of observation. For example, in the `Titanic_passengers` data frame the unit of observation is a person. The `Titanic_boats` data frame has information about the location, capacity,  and launch time of each of the twenty boats carried by the Titanic.  
+
+Suppose we want to know when each survivor left the Titanic. The `Titanic_passengers` frame tells us which boat each survivor was in. The `Titanic_boat` frame tells us when each boat was in. Joining these two tables pulls in launch-time data to add it as a new column  in the passenger data.
+
+```{r  joining_daga,  exercise  = TRUE, exercise.cap="Joining data."}
+With_times <- left_join(Titanic_passengers, Titanic_boats)
+With_times
+```
+
+
+```{r combine-quiz, echo = FALSE}
+Q1 <- question("Some of the variables in the `Titanic_passengers` data  frame are  not  included in the `Titanic_crew` data frame. Which of the following variables  are in `Titanic_passengers` but not `Titanic_crew`?",
+               answer("`age`"),
+               answer("`fare`, `cabin`, and `destination`",  correct  = TRUE),
+               answer("`name`, `boat`, and `survived`")
+               )
+Q2 <- question("There is one variable that `Titanic_passengers` and `Titanic_boats` have in common. It is this common  variable that enables the relevant data in  `Titanic_boats` to be matched to each  row of the `Titanic_passengers` data. Which is the common  varible?",
+               answer("`survived`"),
+               answer("`location"),
+               answer("`boat`", correct = TRUE))
+quiz(caption = "Combining data", Q1, Q2)
+```
