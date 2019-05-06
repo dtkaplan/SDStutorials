@@ -66,9 +66,15 @@ If  you use more than one of these options, remember to separate arguments by co
 
 Exercise: Using `gf_jitter()`, make the following graphic in the previous exercise block.
 
-```{r target_for_exercise, echo = FALSE}
-gf_jitter(class ~ embarked, data = Titanic_passengers, color = ~ sex,
+```{r echo = FALSE, out.width = "90%", fig.align="center"}
+knitr::include_graphics("images/target-1.png")
+```
+
+```{r target_for_exercise, eval = FALSE, echo = FALSE}
+# run this once to create the graphi
+P <- gf_jitter(class ~ embarked, data = Titanic_passengers, color = ~ sex,
           width = 0.3, height = 0.3, alpha  = 0.5)
+ggsave("inst/tutorials/SDS-graphics/images/target-1.png", plot = P)
 ```
 
 ## Violin plots
@@ -105,7 +111,7 @@ quiz(caption = "Violin plots", Q1, Q2)
 
 When you want to put  multiple layers in a graphic, use the individual `gf_`  functions to make each layer, then  connect the  layers with `%>%`, called a *pipe*. Pipes can only be placed at the end of a  line, never  at the start of one. 
 
-```{r multiple_layers, exercise = TRUE, exercise.cap = "Multiple layers"}
+```{r multiple_layers, exercise = TRUE, exercise.cap = "Multiple layers", warning = FALSE}
 gf_jitter(age  ~ class, data = Titanic_passengers, alpha = 0.5) %>%
         gf_violin(age ~ class, data = Titanic_passengers, 
                   alpha = 0.2, fill  = "blue")
@@ -113,6 +119,13 @@ gf_jitter(age  ~ class, data = Titanic_passengers, alpha = 0.5) %>%
 
 Exercise: Make this graphic:
 
-```{r target-2, echo = FALSE, warning = FALSE}
-gf_jitter(age ~ class, data = Titanic_passengers,  alpha  =  0.5, color  = ~ sex) %>% gf_violin(fill  = ~ sex, alpha = 0.2 )
+```{r echo = FALSE, out.width = "90%", fig.align="center"}
+knitr::include_graphics("images/target-2.png")
+```
+
+```{r target-2, eval = FALSE, echo = FALSE, warning = FALSE}
+P <- gf_jitter(age ~ class, data = Titanic_passengers,  
+               alpha  =  0.5, color  = ~ sex) %>% 
+  gf_violin(fill  = ~ sex, alpha = 0.2 )
+ggsave("inst/tutorials/SDS-graphics/images/target-2.png", plot = P)
 ```

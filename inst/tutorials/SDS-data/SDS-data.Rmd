@@ -110,9 +110,11 @@ An easy way to see the names of the variables contained in a data frame is to ap
 
 ```{r name-glimpse, exercise=TRUE, exercise.cap="A quick glimpse of a data frame."}
 names(Titanic_passengers)
-glimpse(Titanic_passengers)
-summary(Titanic_passengers)
+# glimpse(Titanic_passengers)
+# summary(Titanic_passengers)
 ```
+
+You can run each of the functions in turn by uncommenting (that is,  remove `#`) the one you want to run and commenting (that is,  add `#` at the start of the line) the  others.
 
 The advantage of `glimpse()` is that the output is very compact. The disadvantage is that only the first few values of each variable are shown. In contrast, `summary()` tells  you about all the values in each variable, but it's description only has detail for numerical variables.
 
