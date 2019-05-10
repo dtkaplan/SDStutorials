@@ -1,5 +1,5 @@
 ---
-title: "Building and evaluating prediction functions"
+title: "Modeling functions"
 subtitle: "Stats for Data Science"
 author: "D. Kaplan"
 output: learnr::tutorial
@@ -14,30 +14,43 @@ library(mosaicModel)
 knitr::opts_chunk$set(echo = FALSE)
 ```
 
-## Introduction
+## Background
 
-A typical process of making a statistical prediction involves several steps:
+We'll use mathematical *functions* as a way of describing relationships among variables. Think of a function as a machine that takes inputs and produces an output. Whenever the  machine is given the same inputs, it will produce  the same output. The functions we will create will produce as output a value  for  the response variable  when given inputs that are values of the explanatory variables.
 
-1. Collecting data.
-2. Choosing a response and one or more explanatory variables.
-3. Choosing a model architecture.
-4. Training the model on the data so that the model replicates the patterns seen in the data.
-5. Evaluating the model. That is, providing values for the explanatory variables as inputs and reading off the corresponding output.
+Modeling functions are similar in spirit to modeling clay. With modeling clay, you can  push, stretch, and prod to make a object with the shape you want. Modeling functions can be shaped however  you  like, but usually we shape  them  to  resemble our  data.  
+The means for shaping modeling functions kind of representation you want. Unlike modeling clay, which is  pretty  intuitive to use, for  shaping  modeling  functions we  will  use software. This tutorial introduces that software. Confusingly, the software operations  are also called "functions," so it ends up that  you'll  be  using "functions" (software) to  create and  display "functions" (mathematical). To avoid this confusion, we'll often use the word "model" to refer to  the mathematical objects that we use to  describe relationships.
 
-This tutorial introduces computing techniques for accomplishing steps (4) and (5). We'll  take it for granted that you already have (1) data and have decided (2) which variable to use as the response and which variable(s) will be explanatory. As regards  (3) choosing a model architecture, this tutorial will focus on two different architectures: linear and logistic. 
+There are five software functions you will be using  in this  tutorial:
 
-## Linear models
+1. `lm()`  which is used  to train unbounded proportional combination models from  data.
+2. `glm()` which  is much the same as `lm()`, but produces *bounded* proportional combination models.
+3. `mod_plot()` which  makes it easy to graph a model you've created with `lm()` and `glm()`
+4. `mod_eval()` which enables  you to specify the inputs and  receive the output from a model.
+5. `ns()` which let's you specify to `lm()` and `glm()` how flexible the models they create should be.
 
-The linear architecture is appropriate when the response variable is *quantitative*. It doesn't matter whether the explanatory variables are quantitative or categorical; the linear architecture is suitable for all kinds of explanatory variables.
+## Training models
 
-Training a linear model is accomplished with the `lm()` function  in  R. (`lm` stands for `l`inear `m`odel.) You need to provide two inputs to `lm()`:
+The work done by `lm()` and `glm()` is usually referred to a "training" a model or -- equivalently -- as "fitting" a model. Training a model is somewhat like training a dog. You approach the training with two sets of ideas: (1) signals or spoken commands that you want to use to elicit an action from the dog, and (2) what those elicited actions should look like -- sit, roll over, fetch, etc.
+
+In training a dog, you repeat some steps over and over. First, give a command. Second, observe whether the dog produces the corresponding action. If so, you give the dog a praise or a treat. If not, you make movements to illustrate the action. You do this over and over and, somehow, in a process little understood by most people,  the animal learns to connect the command  and  the action.
+
+In training a model, you do much the same thing. The commands are the values of the explanatory variables for an individual row from your data. The "action" that you look for is the  value of the response variable for that row. Over and over again you present rows from the data, taking the values of the explanatory variables as the command and insisting that the model produce a value as close as possible to the response variable value for that row.
+
+Just as with training a dog, most people find it hard to understand the internal changes brought about training, many people find mysterious the mathematical processes that produce a function that relates the explanatory variables to the response variables. Dog training seems to require some natural talent and an ability to communicate with dogs. Some people can do it well, some people can't. Fortunately, the "talent" needed to train a model is entirely represented in in the functions `lm()` and `glm()`. You just have to specify which is to be the response variable and what are to be the explanatory variables, and provide a data frame. The rest is carried out automatically by the computer.
+
+## Bounded models
+
+Unbounded models are appropriate when the response variable is *quantitative*. It doesn't matter whether the explanatory variables are quantitative or categorical; the proportional combinations approach is suitable for all kinds of explanatory variables.
+
+Training a unbounded model is accomplished with the `lm()` function  in  R. You need to provide two inputs to `lm()`:
 
 a. a data frame to use for training
-b. an model formula specifying the explanatory variable(s) and the response variable.
+b. a model formula specifying the explanatory variable(s) and the response variable.
 
-The output of `lm()` is a trained model. The output is usually given a name so that you can refer to it later. You'll  need to do this in order to *evaluate* the model on new explanatory inputs in order to use the model to make a prediction about the value of the response variable that corresponds to those inputs.
+The output of `lm()` is a trained model. The output is usually given a name so that you can refer to it later, for example to graph it or analyze it further.
 
-To illustrate, you will build a predictive model of the amount of natural gas used for heating a home. The data come from the monthly utility bills for the author's home in Minnesota, USA. The data frame is named `Home_utilities` and comes from the `SDSdata` package. 
+To illustrate, let's an unbounded model of the amount of natural gas used for heating a home. The data come from the monthly utility bills for the author's home in Minnesota, USA. The data frame is named `Home_utilities` and comes from the `SDSdata` package. 
 
 The response variable -- the amount of natural gas actually used -- will be `ccf`, which  stands for the volume of gas used in  one month.  (The volume units for natural gas are cubic feet, appreviated ccf.). To start, we'll try to predict `ccf` based on the average temperature, `temp`, during the month.
 
@@ -47,7 +60,7 @@ As you can see in the following code block, the  `lm()` function  is being used.
 mod1 <- lm(ccf ~ temp, data = Home_utilities)
 ```
 
-Training is very simple; all the work is done by `lm()`. Once you have the trained model, you  will want to do something with it. You have some choices:
+Training is very simple; all the work is done by `lm()`. Once you have the trained model, you will want to do something with it. Use the exercise block above to carry out these actions with the model:
 
 1. Plot a graph of the model. Use `mod_plot(mod1)`.
 2. Evaluate the model by specifying an input. For instance, to see the predicted natural gas usage when the monthly average temperature is 32°F (corresponding to 0°C) use `mod_eval(mod1, temp = 32)`. 
@@ -66,31 +79,6 @@ Q3 <- question("What is the numerical output of the model when the input is `tem
                answer("187 cubic feet"),
                answer("188 cubic feet", correct = TRUE))
 quiz(caption="Looking at `ccf` versus `temp`.", Q1, Q2, Q3)
-```
-
-## Prediction intervals
-
-A prediction ought to give an indication of the probability of each  possible outcome.  As an approximation to this, you can ask `mod_eval()` to generate a 95% prediction interval. Do this by  giving `mod_eval()` another argument: `interval = "prediction"`.
-
-The `mod_plot()` function can also take the `interval = "prediction"` argument.
-
-```{r ccf-temp3, exercise = TRUE, exercise.cap = "With prediction intervals"}
-mod1 <- lm(ccf ~ temp, data = Home_utilities)
-mod_eval(mod1, temp = 32,  interval = "prediction")
-mod_plot(mod1, interval = "prediction")
-```
-
-```{r ccf-temp4, echo = FALSE}
-Q1 <- question("What is the 95% prediction interval for `ccf` when `temp = 40`?",
-               answer("97 to  194 ccf", message="Sorry. That's the prediction interval for `temp = 32`. You were asked about  `temp  = 40`."),
-               answer("69 to 165 ccf", correct = TRUE),
-               answer("69 to 194 ccf."))
-Q2 <- question("In the graph of the model, how is the prediction interval shown?", 
-               answer("Error bars"),
-               answer("A band shaded gray.", correct = TRUE),
-               answer("Dotted lines."))
-
-quiz(caption="Prediction intervals", Q1, Q2)
 ```
 
 ## Not-straight models with `ns()`
@@ -116,7 +104,8 @@ Q2 <- question("If you make the degrees of freedom large, the model can go up an
 quiz(caption="Nonlinear curves", Q1, Q2)
 ```
 
-## Logistic models
+
+## Bounded models
 
 The logistic architecture is appropriate when the response variable is categorical and you want to find the probability that the output will be a particular one of the possible levels. Training a logistic model is done with the `glm()` function. Like `lm()`, you provide a model formula and a data frame as arguments. You must also provide a third argument, which will always be `family = binomial`.
 
@@ -157,7 +146,7 @@ quiz(caption = "Logistic regression", Q1, Q2, Q3, Q4)
 
 ## Multiple explanatory variables
 
-You can include multiple explanatory variables by adding their names to the model formula with `+`.  Example: Predict the sex of a person based on the person's height and also the person's mother's height.
+You can include multiple explanatory variables by adding their names to the model formula with `+`.  Example: Model the sex of a person based on the person's height and also the person's mother's height.
 
 ```{r multiple-1, exercise = TRUE, exercise.cap = "Two explanatory variables"}
 sex_mod2 <- glm(sex == "F" ~ height + mother, data = Galton, family = binomial)

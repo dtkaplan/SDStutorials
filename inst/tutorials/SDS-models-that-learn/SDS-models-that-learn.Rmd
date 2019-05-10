@@ -1,0 +1,124 @@
+---
+title: "Models that learn"
+weight: -150
+output: learnr::tutorial
+runtime: shiny_prerendered
+description: "Introduces a new kind of function that can help with the selection of appropriate explanatory variables"
+---
+
+```{r mdl-1, include = FALSE}
+SDSdata::sds_setup()
+library(learnr)
+library(rpart)
+library(rpart.plot)
+Titanic_passengers <- Titanic_passengers %>%
+  mutate(outcome = ifelse(survived, "survived", "died"))
+```
+
+This tutorial introduces software that trains and displays tree models. The new software functions are:
+
+- `rpart()` -- trains the model
+- `prp()` -- displays the tree graphically
+
+And, of course,  you can use the same functions that support `lm()` and `glm()`:
+
+- `mod_eval()`
+- `mod_plot()`
+
+
+## Training and viewing
+
+The `rpart()` training function has basically the same interface as `lm()` and `glm()`. To illustrate, let's  train a model of survival from the sinking of the Titanic. 
+
+
+```{r survive-1, exercise = TRUE}
+mod <- rpart(outcome ~ age + class + sex,  data = Titanic_passengers)
+mod_plot(mod)
+prp(mod, extra = 4, type = 4)
+```
+The first graphical output,  made  by `mod_plot()`, shows the probability of survival in the familar function  format. The second graphical output shows model as a tree. The argument `extra = 4` given to `prp()` is an instruction  for the format of the tree.  Here, `extra = 4` means to display the  probability of each outcome.
+
+Reading the tree takes some practice. The primary  split in this  model  is based  on sex, with males to  the  left and females to  the right. The trained model splits males into  two groups,  boys  (that is males 9 and  under) and men.  For  the  boys, a further split  is  made based  on which class the boy was travelling in.  In each terminal node, the most likely outcome is shown along with the  probabilities of each  of the possible outcomes. (`extra = 4` is an instruction  to  use this style of display. You might also like to  try  another argument:  `type = 4`.)
+
+```{r rpart-quiz-1, echo = FALSE}
+Q1 <- question("What is the  probability of survival of a female traveling  in steerage class?",
+               answer("27%"),
+               answer("73%", correct = TRUE),
+               answer("83%"),
+               answer("38%"))
+Q2 <- question("To answer the previous question, how  many  splits did  you have to  traverse?", 
+               answer("one", correct = TRUE),
+               answer("two"),
+               answer("three."))
+Q3 <- question("What probability that a boy travelling steerage survived?",
+               answer("17%"),
+               answer("38%, correct = TRUE"),
+               answer("100%", message = "No. That's for boys *not* travelling steerage."))
+quiz(caption="Survival from the Titanic.", Q1, Q2, Q3)
+```
+
+## Training tree with a quantitative reponse
+
+The `rpart()` training software can also work when the response variable is quantitative. For instance, the next exercise block trains a model of wage as a function  of several explanatory variables. In plotting the tree, `type` and  `extra` have been set to give the output of the model for the values of the explanatory variables represented by that node, along with  the number of rows from the  data frame that had those values. 
+
+```{r cps-prp-2, exercise = TRUE}
+mod2 <- rpart(wage ~ age + educ, data = CPS85)
+prp(mod2,  type = 4, extra  = 1)
+mod_plot(mod2, nlevels = 8)
+```
+
+```{r rpart-quiz-2, echo = FALSE}
+Q2 <- question("There's one split in the tree that corresponds to whether a person finished high school (12 years of education). What is the difference in the model output for the people finishing high school versus  the others? (And keep in mind that these data are from the 1980s.)",
+               answer("There's no difference"),
+               answer("Non-graduates (26 and older) earned $6.90 / hr compared to $8.50 / hr for graduates.", correct = TRUE),
+               answer("The model doesn't break out high-school non-graduates."))
+Q2 <- question("According to the model, which group makes the highest wage?", 
+               answer("Men 53 and over.", message = "Sex is not included as an explanatory variable."),
+               answer("People younger than 40 with at least two years of college", 
+                      message = "Check again."),
+               answer("People over 40 with  at least two years  of college.", 
+                      message = "That's too broad"),
+               answer("People with at least two years of college aged 40 and 41.", correct = TRUE))
+quiz(caption="A model of wages", Q1, Q2)
+```
+
+Modify the model formula to include `sex` as an explanatory variable.  Then examine the trained model to answer these questions.
+
+```{r rpart-quiz-2b, echo = FALSE}
+Q1 <- question("True or false ... For people with 14 or more years of education (that is, two or more years of college), sex is associated with wage.",
+               answer("false", message = "Not for people younger than 33, but it does appear in the model for those 33+."),
+               answer("true", correct = TRUE))
+Q1 <- question("True or false ... For people with less than two years of college (that is, < 14 years of schooling), sex only matters if you are younger than 26.", 
+               answer("false",  correct = TRUE),
+               answer("true", message = "It's false. Unlike men, women *over* 26 are effected. According to the model, they don't see wage growth with age."))
+               
+quiz(caption="Sex and wages", Q1, Q2)
+```
+
+
+## Learning
+
+The trees produced by  `rpart()` do not always make use of all of the explanatory variables, let alone all the possible combinations of the variables. For this reason, sometimes you will want to specify a large number of explanatory variables, and let the training software sort out which ones are useful for making a prediction and which ones not. The modeling notation includes a way to say,  "Use everything but the response variable as potential explanatory variables."  The next exercise chunk  does this.
+
+```{r cps-prp-3, exercise = TRUE}
+mod3 <- rpart(wage ~ . - age , data = CPS85)
+prp(mod3,  type = 4, extra  = 1)
+names(CPS85)
+```
+
+```{r rpart-quiz-3, echo = FALSE}
+Q1 <- question("Which variables end up included in the model?",
+               answer("sector, race, and marital status"),
+               answer("sector, union, age, education, and sex", correct = TRUE))
+Q2 <- question("True or false  ... Membership in a union is not an important factor for workers in  the management and professional sectors", 
+               answer("false", message = "Union doesn't show up as a spliting variable on the management and professional  part of the tree."),
+               answer("true", correct = TRUE))
+quiz(caption="What did the model learn?", Q1, Q2)
+```
+
+You can force the model to *omit* specified explanatory variables. For  example, to exclude `age` and `educ`  from the model,  you  can use the model formula `wage ~ . - age - educ`. Use the exercise block above to do this.
+
+As you'll see, excluding `age` and `educ` leads to other explanatory variables being taken into the model. Notice that `exper` comes into the model. This is be age and experience are almost proxies for one another. 
+
+Try  again, but excluding  `exper` as well  as `age` and `educ`. More new variables come into the model. This is one of the reasons why different people can draw different  conclusions  about  the world: we are taking different things into account when forming our opinions.
+

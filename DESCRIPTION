@@ -8,5 +8,6 @@ Description: Provides access to the SDS tutorials
 License: All rights reserved.
 Encoding: UTF-8
 LazyData: true
-Depends: learnr, SDSdata
+Depends: SDSdata, tibble, dplyr
+Suggests: learnr
 RoxygenNote: 6.1.1

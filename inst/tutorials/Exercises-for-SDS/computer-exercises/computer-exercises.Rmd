@@ -1,0 +1,139 @@
+---
+title: "Tutorial"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Graphics
+
+### Exercise 1
+
+
+```{r crocodile-swim-pot-default, include = FALSE}
+SDSdata::sds_setup()
+MPG_passenger <- 
+  MPG %>%
+  filter(!is.na(vol_passenger)) 
+```
+
+The exercise block will produce a graphic that compares carbon-dioxide emissions and fuel use for hybrid and non-hybrid passenger vehicles. 
+
+
+```{r crocodile-swim-pot-1, exercise=TRUE}
+gf_jitter(CO2_year ~ hybrid, data = MPG_passenger, width = 0.1, 
+            alpha = 0.5, seed = 101) %>%
+  gf_labs(x = "CO2 emissions (kg per year)", y = "Vehicle class", 
+          title = "2019 model-year vehicles") %>%
+  gf_lims(y = c(NA, 8000))
+```
+
+1. The x- and y-axis labels are reversed. Fix them.
+2. Glance quickly at the graph to get an impression of how much cleaner, in terms of CO_2_, the hybrid vehicles are compared to the conventional vehicles. 
+3. In general, in situations where a *proportional* comparison is meaningful, the y-axis should include zero. Create such a graph by changing the `gf_lims()` command appropriately. (The `NA` that's in the original graph means, "let the computer decide.")
+4. Does the change in scale you made in (3) change the impression you get from the graphic from that in (2)? How so. 
+
+### Exercise 2
+
+The `SDSdata::FARS` data table contains statistics on motor-vehicle related fatalities each year in the US. The following command produces a data layer of the number of crashes.
+
+
+```{r fir-become-painting-1, exercise = TRUE}
+library(SDSdata)
+gf_point(crashes ~ year, data = FARS)
+```
+
+a. For data where there is a time sequence to the points, it can be helpful to guide the eye by connecting the points with a line. You can do this by piping the output of `gf_point()` into `gf_line()` function. Produce the plot with the points connected by lines.
+
+b. Reading from the graphic, figure out what is the numerical size of the drop from the year with the highest number of crashes to the year with the lowest number of crashes. 
+
+c. Similar to (b), figure out what is the *proportional change* in the number of crashes from the highest to the lowest level.
+
+In order to get graphics to give an accurate representation of *proportional* changes, the vertical axis ought to start at zero. This helps the eye to see not just the change in numbers but the size of that change in proportion to the whole. You can set the scale of the y-axis by adding another function call to the graphing sequence: `gf_lims(y = c(0, NA))`. Make such a graph.
+
+Comment: It's tempting to think that the drop in the number of crashes is due to improvements in safety. Think of another factor, unrelated to safety, that might be connected with the pattern shown by the graph. Such other factors, called *covariates*, often need to be taken into account to display the whole story. Modeling and adjustment techniques, covered in later chapters, will help us do this.
+
+## Exercise 3
+
+Adding an interval layer
+
+## Modeling functions
+
+### Exercise 1
+
+In the chapter on stratification, we used `df_stats()` to compute summary intervals. But `lm()` and `glm()` can be used just as well.
+
+As a reminder, stratification was a matter of splitting up a data frame into distinct sets of rows, one set for each of the stratification levels. But this is much the same thing as training a model with categorical explanatory levels.
+
+To illustrate, let's construct a model relating to the `CPS85` data on wages of workers in the mid-1980s.
+
+We'll look at wage stratified by the type of job held by the worker.
+
+```{r whichham-m-1, exercise = TRUE, exercise.cap = "Wage versus sector"}
+# summary interval approach
+gf_jitter(wage ~ sector, data = CPS85, width = 0.3, alpha = 0.3, seed = 101) %>%
+  gf_stat(wage ~ sector, data = CPS85, stat = "coverage")
+# modeling approach
+mod1 <- lm(wage ~ sector, data = CPS85)
+mod_plot(mod1, interval = "prediction") %>%
+  gf_jitter(wage ~ sector, data = CPS85, width = 0.3, alpha = 0.3, seed = 101)
+```
+
+The summary intervals in the stratified data are similar in some ways to the prediction intervals from the unbounded model. 
+
+1. Describe an evident dis-similarity between the summary intervals (which can also be used for prediction) and the prediction intervals from the unbounded model. 
+2. Which would be more useful for an actual prediction: the summary intervals or the prediction intervals?
+
+
+
+## Adjustment
+
+### Exercise 1
+
+The `FARS` data frame (in the `SDSdata` package) records the number of fatal motor-vehicle related crashes in the US over the years. 
+
+The exercise block will create a graphic showing how the number of crashes has varied over the years.
+
+```{r fars-1, exercise = TRUE}
+gf_point(crashes ~ year, data = FARS) %>%
+  gf_line() 
+```
+
+a. What does the `gf_path()` layer do? Try the plot both with and without it.
+b. A better vertical scale would show the proportional changes in the number of crashes. This can be done by changing the scale to include zero. Use the `gf_lims(y  = c(___, ___))` command to do this. You'll have to fill in the blanks yourself. 
+c. Do you agree that the following is a plausible interpretation of the graph:
+
+*Around 2007, driving became substantially safer. Unfortunately, safety started to return to the historical values around 2015.*
+ 
+d. A friend suggests that the decrease in the number of crashes is due to the Great Recession of 2008, which caused people to drive less. Graph out `vehicle_miles` versus year in in the following exercise block.
+
+```{r fars-2, exercise = TRUE}
+# Your plotting commands here
+
+```
+
+e. Based on your graph of `vehicle_miles ~ year`, do you think your friend's theory accounts for the change in the number of crashes during the Great Recession.
+
+
+f. The relationship between the number of crashes, vehicle miles, and year might be somewhat complicated. Here's a plausible hypothetical causal network showing how the changes in safety conditions and vehicle miles over the years might contribute to the number of crashes.
+
+![](images/driving-safety.png)
+
+"Safety conditions" is not something that we can directly measure from the FARS data. (In the diagram, a different font is used to indicate that the variable is unmeasured.) But, insofar as we want to "read out" safety conditions from the FARS data, we want a model that can tell us just about the direct causal path from "safety conditions" to the number of crashes. But the model `crashes ~ year` will represent *both* pathways from year to `crashes`, not just the one going through "safety conditions." 
+
+In order to accomplish this, we want to build a model that blocks the upper pathway. This can be done by "controlling for" or "adjusting for" vehicles miles. One 
+approch to accomplish such an "adjusting for" is to dividing the number of crashes by the number of vehicle miles.  The following exercise block adds a variable `crash_rate` to `FARS` that adjusts the number of crashes by the vehicle miles driven.
+
+```{r dog-hold-sheet-0, exercise = TRUE}
+FARS <- FARS %>% mutate(crash_rate = crashes / vehicle_miles)
+# add plotting commands here
+
+```
+Plot out the crash rate over the years. Is the plot consistent with the earlier interpretation that driving became substantially safer around 2007 and then returned to historical levels around 2015? Explain what features of the plot led you  to your answer.
+
+

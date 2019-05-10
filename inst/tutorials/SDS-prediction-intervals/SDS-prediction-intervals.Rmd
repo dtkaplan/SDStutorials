@@ -1,0 +1,109 @@
+---
+title: "Prediction intervals from functions"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(SDSdata)
+library(mosaic)
+library(mosaicModel)
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Background
+
+In the tutorial on *modeling functions*, you saw how to train models that:
+
+1. Can take one or several explanatory variables as input.
+2. Can be *graphed* easily.
+3. Can be *evaluated*, that is, can produce an *output* when you specify the inputs.
+
+To illustrate, let's return to the model of natural gas use in a household. The response variable we selected was the amount of natural gas used (in cubic feet each month) and an explanatory variable was average outdoor temperature during that month.
+
+The next exercise chunk should be familiar since it repeats commans covered in the *modeling functions* tutorial.
+
+```{r pred-intervals-1, exercise = TRUE}
+mod1 <- lm(ccf ~ temp, data = Home_utilities)
+mod_eval(mod1, temp = 40:45)
+```
+
+Note carefully that when the model is evaluated on a single input (e.g. `temp = 40`), the model output is a single number. Of course that number may well be different for different inputs, but at each individual level of the input, the model output is a single number. When you graph a model function, the graph shows the output of the model for each of the possible inputs -- the graph looks like a line or curve because the model output for *each* of the possible inputs is shown along with the others.
+
+Such graphs may be familiar to you from mathematics classes, where graphics are often used to present algebraic or trigonometric functions such as $f(x) = m x + b$ or $\sin(x)$ or $\log(x)$. In mathematics, you can use such graphs to read off the value of the function for any given input. 
+
+In statistics, it's also common to present a graph of the trained model. HOWEVER, this is merely a convention; it doesn't address genuine statistical questions such as the following:
+
+1. How close is the model to the data on which it was trained?
+2. If I know the input in the world from which the data were collected, how do I use the model to make a *prediction* about the output in that world?
+3. If I change the input by a given amount, how much will the output change?
+4. If I have two models to compare, how can I see if the models are consistent with one another or have a different story to tell?
+
+In answering (1) and (2), we want to present the output of a model in a different way. Instead of a single number as output, we'll format the output as an *interval*. (To answers questions like (3) and (4), we'll need additional techniques, to be introduced in later chapters.)
+
+## Prediction intervals
+
+The interval we're going to start with is called a *prediction interval*. This is very much like the *summary intervals* we used when studying stratification.
+
+Telling the software to give a prediction interval as output is merely a matter of giving `mod_eval()` or `mod_plot()` another argument: `interval = "prediction"`. 
+
+As is conventional with stratification, the interval is at a 95% level, and so is called a "95% prediction interval."
+
+
+```{r pred-int2, exercise = TRUE, exercise.cap = "With prediction intervals"}
+mod1 <- lm(ccf ~ temp, data = Home_utilities)
+mod_eval(mod1, temp = 32,  interval = "prediction")
+mod_plot(mod1, interval = "prediction")
+```
+
+```{r ccf-temp4, echo = FALSE}
+Q1 <- question("What is the 95% prediction interval for `ccf` when `temp = 40`?",
+               answer("97 to  194 ccf", message="Sorry. That's the prediction interval for `temp = 32`. You were asked about  `temp  = 40`."),
+               answer("69 to 165 ccf", correct = TRUE),
+               answer("69 to 194 ccf."))
+Q2 <- question("In the graph of the model, how is the prediction interval shown?",
+               answer("Error bars"),
+               answer("A band shaded gray.", correct = TRUE),
+               answer("Dotted lines."))
+
+quiz(caption="Prediction intervals", Q1, Q2)
+```
+
+## Prediction or summary?
+
+How does a prediction interval differ from a summary interval? They are almost the same thing, and they are used for the same purposes. The difference is that a summary interval for a given stratum is based just on the data for that stratum, whereas a prediction interval includes contributions from every data point, even those data points that have different values for the explanatory variables.
+
+To illustrate, let's look at the relationship between the `Home_utilities` data frame and the function trained on it. We can do this by combining `mod_plot()` with `gf_point()`:
+
+```{r pred-int3}
+mod2 <- lm(ccf ~ ns(temp, 3), data = Home_utilities)
+mod_plot(mod2, interval = "prediction") %>%
+  gf_point(ccf ~ temp, data = Home_utilities)
+```
+
+As you can see from the graph you created, the 95% prediction interval covers a lot of the data: about 95%. In this way, the prediction interval is much like a summary interval. On the other hand, the prediction interval covers too little of the data at low temperatures, and covers too much at high temperatures. 
+
+## Intervals on bounded functions?
+
+There's no point in constructing prediction intervals when the response is categorical. Why not? Because the probability output of the model tells everything we need to know about how likely each possible output is to occur. For instance, when the response is "Alive" or "Dead", even before training the model we know the full range of possible outcomes: "Alive" or "Dead". 
+
+## Aside: Heteroscedasticity
+
+There is a name for the phenomenon of the prediction interval being too narrow for some inputs and too wide for others, as in the graph you made in the "Prediction or summary?" section. It's a wonderful word to use if you are wanting to impress others with your lingual virtuosity and your mastery of arcana of statistics.
+
+Heteroscedasticity is not in itself a problem. But it does call for appropriate techniques, which `lm()` doesn't provide. The figure below shows more satisfactory intervals specifically chosen to deal with the three distant outliers ("robust modeling" implemented with `rlm()` and transformation of the response variable with a square-root). Such techniques are not within our scope here. For our purposes, `lm()` works well. But keep in mind that there are alternatives that can better handle situations with outliers, etc.
+
+```{r echo = FALSE, warning = FALSE}
+mod3 <- MASS::rlm(sqrt(ccf) ~ ns(temp,3), data = Home_utilities)
+mod_plot(mod3, post_transform = c(ccf = function(x) x^2), interval = "prediction") %>%
+  gf_point(ccf ~ temp, data = Home_utilities) %>%
+  gf_labs(title = "Better prediction intervals using 'robust' modeling and transforms.")
+```
+
+
+
+
+
