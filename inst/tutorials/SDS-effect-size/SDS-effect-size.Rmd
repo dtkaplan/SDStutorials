@@ -1,0 +1,138 @@
+---
+title: "Effect size"
+subtitle: "Stats for Data Science"
+author: "D. Kaplan"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(SDSdata)
+library(mosaic)
+library(mosaicModel)
+library(NHANES)
+knitr::opts_chunk$set(echo = FALSE)
+People <- NHANES %>%
+  filter(Age >= 21, Age <= 40, !is.na(MaritalStatus), 
+         MaritalStatus %in% c("LivePartner",  "Married", "Separated"),
+         HomeOwn != "Other") %>%
+  mutate(married = ifelse(MaritalStatus == "Married", "married", "not"))
+married_mod <- glm(married == "married" ~ Age + Gender*Height + HomeOwn + Poverty, 
+                   data = People, family  = "binomial")
+```
+
+
+
+
+## Introduction
+
+An *effect size* is a way of examining a model. Of course, usually we build models to reflect our view of some aspect of the real world. Insofar as a model is faithful to real-world mechanisms, the effect size is telling us about  the real world.
+
+A shorthand way to present an effect size is as a number, often with units.  The effect size  quantifies how much the output of the model changes when one  of the inputs changes *and the others are held at a constant value*. That is, the effect size is always *with respect to* one of the explanatory variables. Typically the effect size with  respect to one variable will be different from the effect size with respect to another.
+
+When  the input variable being changed is quantitative, the  effect size is usually formatted as a ratio or rate:  the change in output / change  in  input. 
+
+On the other hand, when the input variable being changed is categorical,  the effect size is presented simply as the change in the  output of the model when the  input is changed from one selected level to another selected level. Of course, the number is itself a function of  which level you started with and which level you  changed the input  to.
+
+In later chapters, we'll see how to present the effect size as an *interval*, which  allows us to summarize how much uncertainty is introduced by the random nature of sampling.
+
+In this tutorial, you'll see:
+
+1.  How to use `mod_eval()` to compute  differences.
+2.  How to use `mod_effect()` to simplify the calculation. 
+
+## First, the model
+
+Remember that the effect size tells you about a model. In order to calculate an effect size -- perhaps this is obvious -- you need to have a model. As with all the  models we have studied, the output of a model is a number. If the response variable is quantitative, the number is in terms of the units of the response variable. If the response variable is categorical, the number is a probability. The effect-size calculations are the same in either case, whether the response is quantitative or categorical.
+
+The example we'll use is a model of whether a person age 21 to 40 is married or has never married. We'll use the National Health and Nutrition Evaluation Survey data. There are 1613 people in the NHANES  data who are in this age range and for whom there  is data on marital status. The data frame `People` holds the rows from NHANES for these people. 
+
+The explanatory variables are Age, Gender, Height, HomeOwn, and Poverty. The model is stored under the name `married_mod`.
+
+## Evaluating the model
+
+The `mod_eval()` function will evaluate a model: taking inputs and producing the corresponding output. The exercise chunk shows a very simple application of `mod_eval()`:
+
+```{r eval1, exercise = TRUE}
+mod_eval(married_mod, Age = 30, Height = 180, Poverty = 3)
+```
+
+When you use `mod_eval()` without  specifying values for the input, the software chooses a handful of representative values for each input variable. That's why  there  are so  many rows in the about of `mod_eval(0)`.
+
+You can set specific values for the inputs using additional arguments to `mod_eval()`. These additional arguments have the form `Age = 30`,  where the name of the variable goes to the left of the `=` and the desired value goes to the right.
+
+Try setting age to 30 (years), height to 180 (cm), and income (as a multiple of the poverty level) to 3. You'll have to spell the variable names correctly, including capitalization. 
+
+
+```{r mod_eval1, echo  = FALSE}
+Q1  <- question("When you specify that age is 30,  height is 180,  and income is 3, there  are still some unspecified inputs. What are these?",
+                answer("there are none"),
+                answer("`HomeOwn`"),
+                answer("`HomeOwn` and `Gender`", correct  = TRUE),
+                answer("`HomeOwn`, `Gender` and `MaritalStatus`",
+                       message  = "`MaritalStatus` is the response variable, not an input to  the model." ))
+Q2 <- question("Who is more likely to be married: people who own their homes or people who rent?",
+               answer("Home owners",  correct = TRUE),
+               answer("Renters"),
+               answer("They are about the same"))
+
+Q3 <- question("Who is more likely  to be married: males or females?",
+               answer("males"),
+               answer("females"),
+               answer("They are about  the same",  correct = TRUE))
+quiz(caption="Evaluating the model", Q1, Q2, Q3)
+```
+
+## Effect size from `mod_eval()`
+
+You can  use `mod_eval()` to calculate an effect size. 
+
+1. Decide *with respect to* which explanatory variable you want.
+2. Decide on levels for the other explanatory variables.
+3. Evaluate the model at the levels in (2) and for two different values of the variable in (1).
+4. Take the difference in model output for the two different values in (1).
+
+To illustrate, let's look at the effect size of the probability of being married with respect to `Poverty`.
+
+```{r eval2, exercise = TRUE, exercise.cap = "With respect to ..."}
+mod_eval(married_mod, age = 30, Height = 180, #HomeOwn = "Rent", 
+         Age = 30, Gender = "female", Poverty = c(3))
+```
+
+From the model output, you can see that a change in a 30-year-old woman's income from 3 to 4 times the poverty level increases her chance of being married by about 6 percentage points: from 63% to 69%.
+
+```{r mod_eval2, echo  = FALSE}
+Q1  <- question("Setting the inputs to the level used in the example, and the `Poverty` to 3, what is the effect size of renting versus owning on the probability of being married?",
+                answer("No change from owning to renting"),
+                answer("Being married is 15 percentage points higher for owners than for renters", correct  = TRUE),
+                answer("Being married is 30 percentage points higher for owners than for renters"))
+Q2 <- question("Does owning a house *cause* an increase in the probability of being married",
+               answer("Yes, people who own a house are more attractive mates"),
+               answer("No. It's just that people buy a house *after* they get married."),
+               answer("Either of the two above answers are plausible. We can't tell from the effect size, however, which one if either might be right.", correct = TRUE))
+quiz(Q1, Q2)
+```
+
+## Effect size from `mod_effect()`
+
+The `mod_effect()` function does essentially the same computation you would do with `mod_eval()`, but packages things in a more compact way. You specify the with-respect-to variable using a formula.
+  
+```{r modeffect1, exercise = TRUE, exercise.cap = 'Using mod_effect()'}
+mod_effect(married_mod, ~ HomeOwn, Age  = 30, Height = 180, Poverty = 3, Gender = "female"  )
+```
+
+
+<!-- 
+## Effect size  may depend on other variables
+
+NEED TO FIX BUG IN `mod_effect()`; it's not respecting the `from=` and `to=` arguments and failing to  exclude null changes  (e.g. own -> own).
+
+Each calculation of an effect size varies the with-respect-to variable, but holds the other explanatory variables constant. But you can do as many such calculations as you like. This enables you to look  at a range of different scenarios, e.g. a 30-year old female or a 25-year old male with an income level of 1, or whatever else you want. If you don't give specific values for the explanatory variables in `mod_eval()`, the function will calculate effect sizes for a range of scenarios.
+
+```{r modeffect2, exercise = TRUE, exercise.cap = 'Many scenarios'}
+mod_effect(married_mod, ~ HomeOwn,  Height = 180, Gender = "female", from = "Rent", to = "Own", nlevels = 2)
+```
+
+-->
+THEN SHOW HOW TO PLOT THIS.
